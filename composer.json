@@ -1,0 +1,26 @@
+{
+  "name": "rabadan731/yii2-images",
+  "description": "Yii2 Image",
+  "keywords": ["yii2", "image", "rabadan731"],
+  "type": "yii2-extension",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Rabadan Akagasanov",
+      "email": "rabadan731@yandex.ru",
+      "homepage": "http://rabadan.ru"
+    }
+  ],
+  "minimum-stability": "dev",
+  "require": {
+    "yiisoft/yii2": "*",
+    "ext-gd" : "*"
+  },
+  "require-dev": {
+  },
+  "autoload": {
+    "psr-4": {
+      "rabadan731\\image\\": "src/"
+    }
+  }
+}
