@@ -102,46 +102,84 @@ class UploadifiveAction extends Action
      */
     public function run()
     {
-        if (Yii::$app->request->isPost) {
-
-            $file = UploadedFile::getInstanceByName($this->uploadParam);
-            $model = new DynamicModel(compact('file'));
-            $model->addRule('file', $this->_validator, $this->validatorOptions)->validate();
-
-            if ($model->hasErrors()) {
-                $result = [
-                    'error' => $model->getFirstError('file')
-                ];
-            } else {
-                $baseName = $model->file->baseName;
-                if ($this->unique === true && $model->file->extension) {
-                    $model->file->name = Inflector::slug($baseName,'_'). "_". uniqid() . '.' . $model->file->extension;
-                }
-                if ($model->file->saveAs($this->path . $model->file->name)) {
-
-                    if ($this->saveDB) {
-                        $newModel                   = new Image();
-                        $newModel->title            = $baseName;
-                        $newModel->status           = 1;
-                        $newModel->type             = $this->uploadType;
-                        $newModel->sitemap          = 1;
-                        $newModel->object_table     = $this->_content;
-                        $newModel->object_id        = $this->_content_id;
-                        $newModel->file_name        = $model->file->name;
-                        $newModel->file_url         = $this->url;
-                        $result = $newModel->save();
-                    }
-                } else {
-                    $result = [
-                        'error' => "ERROR_CAN_NOT_UPLOAD_FILE"
-                    ];
-                }
-            }
-            Yii::$app->response->format = Response::FORMAT_JSON;
-
-            return $result;
-        } else {
-            throw new BadRequestHttpException('Only POST is allowed');
-        }
+//        if (Yii::$app->request->isPost) {
+//
+//            $file = UploadedFile::getInstanceByName($this->uploadParam);
+//            $model = new DynamicModel(compact('file'));
+//            $model->addRule('file', $this->_validator, $this->validatorOptions)->validate();
+//
+//            if ($model->hasErrors()) {
+//                $result = [
+//                    'error' => $model->getFirstError('file')
+//                ];
+//            } else {
+//                $baseName = $model->file->baseName;
+//                if ($this->unique === true && $model->file->extension) {
+//                    $model->file->name = Inflector::slug($baseName,'_'). "_". uniqid() . '.' . $model->file->extension;
+//                }
+//                if ($model->file->saveAs($this->path . $model->file->name)) {
+//
+//                    if ($this->saveDB) {
+//                        $newModel                   = new Image();
+//                        $newModel->title            = $baseName;
+//                        $newModel->status           = 1;
+//                        $newModel->type             = $this->uploadType;
+//                        $newModel->sitemap          = 1;
+//                        $newModel->object_table     = $this->_content;
+//                        $newModel->object_id        = $this->_content_id;
+//                        $newModel->file_name        = $model->file->name;
+//                        $newModel->file_url         = $this->url;
+//                        $result = $newModel->save();
+//                    }
+//                } else {
+//                    $result = [
+//                        'error' => "ERROR_CAN_NOT_UPLOAD_FILE"
+//                    ];
+//                }
+//            }
+//            Yii::$app->response->format = Response::FORMAT_JSON;
+//
+//            return $result;
+//        } else {
+//            throw new BadRequestHttpException('Only POST is allowed');
+//        }
+//        $model = $this->findModel($id);
+//        if (Yii::$app->request->isPost) {
+//            Yii::$app->response->format = Response::FORMAT_JSON;
+//            $file = UploadedFile::getInstanceByName('file_upload');
+//            $new_name = Inflector::slug($file->baseName, '_') . "_" . uniqid() . '.' . $file->extension;
+//            $savePath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $new_name;
+//            $file->saveAs($savePath);
+//
+//            $waterMarkSystem = KeyStorageItem::getValue('watermark');
+//            if (!is_null($waterMarkSystem)) {
+//                $waterMarkSystem = ltrim($waterMarkSystem, '/');
+//                echo Yii::getAlias("@frontend/web/{$waterMarkSystem}");
+//                $this->setWaterMark($savePath, "@frontend/web/{$waterMarkSystem}", false);
+//            }
+//
+//            $waterMarkAgency = $model->agency->getWatermarkPath();
+//            if (!is_null($waterMarkAgency)) {
+//                $this->setWaterMark($savePath, $waterMarkAgency, true);
+//            }
+//
+//            $model->attachImage($savePath);
+//
+//            if (is_null($model->img_sort)) {
+//                $imgSortArray = [];
+//                $imgSortArray[] = 0;
+//            } else {
+//                $imgSortArray = explode(',', $model->img_sort);
+//                $imgSortArray[] = count($imgSortArray);
+//            }
+//            $model->img_sort = implode(',', $imgSortArray);
+//            $model->save(false, ['img_sort']);
+//
+//            unlink($savePath);
+//
+//            return true;
+//        } else {
+//            throw new BadRequestHttpException('Only POST is allowed');
+//        }
     }
 }

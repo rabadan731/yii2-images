@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\images\assets;
+namespace rabadan731\images\assets;
 
 use yii\web\AssetBundle;
 

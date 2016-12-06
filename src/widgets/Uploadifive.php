@@ -2,7 +2,7 @@
 
 namespace rabadan731\images\widgets;
 
-use common\components\images\assets\UploadifiveAsset;
+use rabadan731\images\assets\UploadifiveAsset;
 use yii\base\InvalidConfigException;
 use yii\base\Widget;
 use yii\helpers\Url;
