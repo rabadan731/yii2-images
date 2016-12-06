@@ -6,7 +6,7 @@
  * Time: 13:00
  */
 
-namespace rabadan731\image\widgets;
+namespace rabadan731\images\widgets;
 
 use Yii;
 use rabadan731\enum\helpers\ImageEnum;

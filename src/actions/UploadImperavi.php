@@ -1,9 +1,9 @@
 <?php
 
-namespace rabadan731\image\actions;
+namespace rabadan731\images\actions;
 
 use Yii;
-use rabadan731\image\models\Image;
+use rabadan731\images\models\Image;
 use yii\helpers\FileHelper;
 use yii\base\Action;
 use yii\base\InvalidCallException;

@@ -20,7 +20,7 @@
   },
   "autoload": {
     "psr-4": {
-      "rabadan731\\image\\": "src/"
+      "rabadan731\\images\\": "src/"
     }
   }
 }

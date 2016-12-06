@@ -1,6 +1,6 @@
 <?php
 
-namespace rabadan731\image\widgets;
+namespace rabadan731\images\widgets;
 
 use common\models\R731Images;
 use Yii;

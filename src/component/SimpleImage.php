@@ -1,6 +1,6 @@
 <?php
 
-namespace rabadan731\image\components;
+namespace rabadan731\images\components;
 
 use Exception;
 

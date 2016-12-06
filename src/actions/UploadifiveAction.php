@@ -1,8 +1,8 @@
 <?php
 
-namespace rabadan731\image\actions;
+namespace rabadan731\images\actions;
 
-use rabadan731\image\models\Image;
+use rabadan731\images\models\Image;
 use Yii;
 
 use yii\helpers\FileHelper;

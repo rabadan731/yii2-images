@@ -1,6 +1,6 @@
 <?php
 
-namespace rabadan731\image\actions;
+namespace rabadan731\images\actions;
 
 use Yii;
 use yii\base\Action;

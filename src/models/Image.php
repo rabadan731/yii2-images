@@ -1,6 +1,6 @@
 <?php
 
-namespace rabadan731\image\models;
+namespace rabadan731\images\models;
 
 use Yii;
 use yii\base\InvalidConfigException;
