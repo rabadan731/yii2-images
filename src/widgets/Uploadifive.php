@@ -2,7 +2,6 @@
 
 namespace rabadan731\images\widgets;
 
-use common\models\R731Images;
 use common\components\images\assets\UploadifiveAsset;
 use yii\base\InvalidConfigException;
 use yii\base\Widget;
@@ -32,7 +31,7 @@ class Uploadifive extends Widget {
     public $buttonText = "Добавить фото";
     public $buttonClass = "btn btn-default btn-sm";
     public $onComplete = "";
-    public $uploadType = R731Images::IMG_LIST;
+    public $uploadType = 0;//R731Images::IMG_LIST;
 
 
     /**

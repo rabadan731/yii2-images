@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: rabadan
- * Date: 11.11.15
- * Time: 13:00
- */
 
 namespace rabadan731\images\widgets;
 
