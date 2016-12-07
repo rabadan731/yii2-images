@@ -56,20 +56,20 @@ class Uploadifive extends Widget {
         $view->registerJs("
 		$(function() {
 		$('#file_upload').uploadifive({
-			'buttonText': '".($this->buttonText)."',
-			'buttonClass': '".($this->buttonClass)."',
+			'buttonText': '{$this->buttonText}',
+			'buttonClass': '{$this->buttonClass}',
 			'auto': true,
             'formData' : {
-               'content'        : '".($this->tableAttribute)."',
-               'content_id'     : '".($this->idAttribute)."',
-               'uploadType'     : '".($this->uploadType)."',
-               '_csrf'          : yii.getCsrfToken()
+               'object'        : '{$this->tableAttribute}',
+               'object_id'     : '{$this->idAttribute}',
+               'uploadType'    : '{$this->uploadType}',
+               '_csrf'         :  yii.getCsrfToken()
              },
 			'dnd' :true,
 			'fileObjName': 'file_upload',
 			'fileType' : 'image/*',
 			'queueID': 'queue',
-			'uploadScript': '"  . Url::to([$this->uploadScriptUrl])  . "',
+			'uploadScript': '{$this->uploadScriptUrl}',
 			'onUploadComplete': function(file, data) {
 				if (data=='0') {
 					file.queueItem.find('.fileinfo').html(' - Ошибка в загрузке файла :( ');
@@ -80,7 +80,7 @@ class Uploadifive extends Widget {
 				}
 			},
 			'onQueueComplete' : function(uploads) {
-			    ".($this->onComplete)."
+			    {$this->onComplete}
 			}
 		});
 	});");

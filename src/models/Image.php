@@ -36,6 +36,10 @@ class Image extends \yii\db\ActiveRecord
     CONST IMG_LIST = 5;
     CONST IMG_WYSIWYG = 9;
 
+    CONST STATUS_DRAFT = 0;
+    CONST STATUS_CLOSE = 3;
+    CONST STATUS_PUBLISH = 7;
+
     /**
      * @inheritdoc
      */

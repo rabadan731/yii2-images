@@ -2,19 +2,18 @@
 
 namespace rabadan731\images\actions;
 
+use rabadan731\images\components\SimpleImage;
 use rabadan731\images\models\Image;
 use Yii;
 
+use yii\base\Exception;
 use yii\helpers\FileHelper;
 
 use yii\base\Action;
-use yii\base\InvalidCallException;
 use yii\base\InvalidConfigException;
-use yii\base\DynamicModel;
 
 use yii\helpers\Inflector;
-use yii\web\UploadedFile;
-use yii\web\BadRequestHttpException;
+use yii\web\UploadedFile; 
 use yii\web\Response;
 
 
@@ -25,11 +24,9 @@ class Uploadifive extends Action
      */
     public $path;
 
-    /**
-     * @var string URL path to directory where files will be uploaded
-     */
-    public $url;
-    public $dir="";
+
+    public $object;
+    public $objectId;
 
     /**
      * @var string Validator name
@@ -48,53 +45,53 @@ class Uploadifive extends Action
      */
     public $unique = true;
 
-    /**
-     * @var array Model validator options
-     */
-    public $validatorOptions = [];
+    public $watermark;
+    public $cachePath;
 
-    /**
-     * @var string Model validator name
-     */
-    private $_validator = 'image';
+    public $ifSavedBase = false;
 
-    public $saveDB = true;
-
-    private $_content;
-    private $_content_id;
+    private $pathObject;
+    private $newFileName;
+    private $fileTitle;
 
     /**
      * @inheritdoc
      */
     public function init()
     {
-        //Получаем параметры
-        $this->_content = Yii::$app->request->post("content","content");
-        $this->_content_id = (int)Yii::$app->request->post("content_id",0);
-        $this->uploadType = (int)Yii::$app->request->post("uploadType",$this->uploadType);
-
-        $this->dir = rtrim((($this->_content)."/".($this->_content_id)."/".$this->dir),"/");
-
-
-        if ($this->url === null) {
-            throw new InvalidConfigException('The "url" attribute must be set.');
-        } else {
-            $this->url = rtrim(Yii::getAlias($this->url), '/') . '/' .($this->dir). '/';
-        }
-        if ($this->path === null) {
+        if (is_null($this->path)) {
             throw new InvalidConfigException('The "path" attribute must be set.');
         } else {
-            $this->path = rtrim(Yii::getAlias($this->path), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . (str_replace("/",DIRECTORY_SEPARATOR,$this->dir)) . DIRECTORY_SEPARATOR;
 
-        if (!FileHelper::createDirectory($this->path)) {
-            throw new InvalidCallException("Directory specified in 'path' attribute doesn't exist or cannot be created.");
-        }
-        }
-        if ($this->uploadOnlyImage !== true) {
-            $this->_validator = 'file';
-        }
+            //Получаем параметры
+            if (is_null($this->object)) {
+                $this->object = Yii::$app->request->post("object");
+            }
+            if (is_null($this->objectId)) {
+                $this->objectId = Yii::$app->request->post("object_id");
+            }
+            if (is_null($this->uploadType)) {
+                $this->uploadType = Yii::$app->request->post("upload_type");
+            }
 
+            $this->pathObject = rtrim("{$this->path}/{$this->object}/{$this->objectId}", "/");
 
+            if (!file_exists($this->pathObject)) {
+                if (!FileHelper::createDirectory($this->pathObject)) {
+                    throw new InvalidConfigException(
+                        "Directory specified in 'path' attribute doesn't exist or cannot be created."
+                    );
+                }
+            }
+
+            if ($this->ifSavedBase) {
+                if (empty($this->object) || empty($this->objectId)) {
+                    throw new InvalidConfigException(
+                        "не указан объекет и его ID для записи в базу данных"
+                    );
+                }
+            }
+        }
     }
 
     /**
@@ -102,46 +99,106 @@ class Uploadifive extends Action
      */
     public function run()
     {
-        if (Yii::$app->request->isPost) {
+        $errors = [];
 
-            $file = UploadedFile::getInstanceByName($this->uploadParam);
-            $model = new DynamicModel(compact('file'));
-            $model->addRule('file', $this->_validator, $this->validatorOptions)->validate();
+        if (!Yii::$app->request->isPost) {
+            $errors[] = 'Only POST is allowed';
+            return $errors;
+        }
 
-            if ($model->hasErrors()) {
-                $result = [
-                    'error' => $model->getFirstError('file')
-                ];
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $file = UploadedFile::getInstanceByName('file_upload');
+
+        $this->fileTitle = $file->baseName;
+        $this->newFileName = (Inflector::slug($file->baseName, '_')).
+            "_".(uniqid())."."."{$file->extension}";
+
+        if (!$file->saveAs($this->getFilePath())) {
+            $errors[] = "Error save file";
+        }
+
+        if (!is_null($this->watermark)) {
+            $this->setWaterMark();
+        }
+
+        if ($this->ifSavedBase) {
+            if (!$this->saveBase()) {
+                $errors[] = "Error save file";
             } else {
-                $baseName = $model->file->baseName;
-                if ($this->unique === true && $model->file->extension) {
-                    $model->file->name = Inflector::slug($baseName,'_'). "_". uniqid() . '.' . $model->file->extension;
-                }
-                if ($model->file->saveAs($this->path . $model->file->name)) {
+                $errors[] = "Good save file";
+            }
+        }
 
-                    if ($this->saveDB) {
-                        $newModel                   = new Image();
-                        $newModel->title            = $baseName;
-                        $newModel->status           = 1;
-                        $newModel->type             = $this->uploadType;
-                        $newModel->sitemap          = 1;
-                        $newModel->object_table     = $this->_content;
-                        $newModel->object_id        = $this->_content_id;
-                        $newModel->file_name        = $model->file->name;
-                        $newModel->file_url         = $this->url;
-                        $result = $newModel->save();
-                    }
-                } else {
-                    $result = [
-                        'error' => "ERROR_CAN_NOT_UPLOAD_FILE"
-                    ];
+        return $errors;
+    }
+
+    public function getFilePath()
+    {
+        return "{$this->pathObject}/{$this->newFileName}";
+    }
+
+
+    private function saveBase()
+    {
+        $newModel                   = new Image();
+        $newModel->title            = $this->fileTitle;
+        $newModel->status           = Image::STATUS_DRAFT;
+        $newModel->type             = $this->uploadType;
+        $newModel->sitemap          = 1;
+        $newModel->object_table     = $this->object;
+        $newModel->object_id        = $this->objectId;
+        $newModel->file_name        = $this->newFileName;
+        $newModel->file_url         = $this->pathObject;
+        return $newModel->save();
+    }
+
+    public function setWaterMark($right = true)
+    {
+        if (!file_exists(Yii::getAlias($this->getFilePath()))) {
+            throw new Exception('Image Path not detected!');
+        }
+
+        if (!file_exists(Yii::getAlias($this->watermark))) {
+            throw new Exception('WaterMark not detected!');
+        }
+
+        $image = new SimpleImage($this->getFilePath());
+
+        $wmMaxWidth = intval($image->get_width() * 0.4);
+        $wmMaxHeight = intval($image->get_height() * 0.4);
+
+        $waterMarkPath = Yii::getAlias($this->watermark);
+
+        $waterMark = new SimpleImage($waterMarkPath);
+
+        if (
+            $waterMark->get_height() > $wmMaxHeight
+            or
+            $waterMark->get_width() > $wmMaxWidth
+        ) {
+            $waterMarkPathInfo = pathinfo($waterMark);
+
+            $waterMarkPath = "{$this->cachePath}{${DIRECTORY_SEPARATOR}}{$waterMarkPathInfo['filename']}
+                {$wmMaxWidth}x{$wmMaxHeight}.{$waterMarkPathInfo['extension']}";
+
+            //throw new Exception($waterMarkPath);
+            if (!file_exists($waterMarkPath)) {
+                $waterMark->fit_to_width($wmMaxWidth);
+                $waterMark->save($waterMarkPath, 100);
+                if (!file_exists($waterMarkPath)) {
+                    throw new Exception("Cant save watermark to {$waterMarkPath}!!!");
                 }
             }
-            Yii::$app->response->format = Response::FORMAT_JSON;
-
-            return $result;
-        } else {
-            throw new BadRequestHttpException('Only POST is allowed');
         }
+
+        if ($right) {
+            $image->overlay($waterMarkPath, "bottom right", .5, -10, -10);
+        } else {
+            $image->overlay($waterMarkPath, "bottom left", .5, 10, 10);
+        }
+
+        $image->save($this->getFilePath(), 100);
     }
+
+
 }
