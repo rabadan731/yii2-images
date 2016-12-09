@@ -22,11 +22,18 @@ class Uploadifive extends Action
     /**
      * @var string Path to directory where files will be uploaded
      */
-    public $path;
+    public $systemPath;
+    public $folderPath;
 
+    private $newFileName;
 
-    public $object;
+    public $objectTable;
     public $objectId;
+    public $objectClass;
+
+    public $fileExtension = [
+        'jpg', 'png', 'jpeg', 'gif'
+    ];
 
     /**
      * @var string Validator name
@@ -50,22 +57,54 @@ class Uploadifive extends Action
 
     public $ifSavedBase = false;
 
-    private $pathObject;
-    private $newFileName;
     private $fileTitle;
+
+
+    public function getPathPublish()
+    {
+        $list = [
+            $this->folderPath
+        ];
+
+        if (!is_null($this->objectTable)) {
+            $list[] = $this->objectTable;
+        }
+        if (!is_null($this->objectId)) {
+            $list[] = $this->objectId;
+        }
+
+        return implode("/", $list);
+    }
+
+    public function getPathSystem()
+    {
+        $list = [
+            $this->systemPath
+        ];
+
+        if (!is_null($this->objectTable)) {
+            $list[] = $this->objectTable;
+        }
+        if (!is_null($this->objectId)) {
+            $list[] = $this->objectId;
+        }
+
+        return implode("/", $list);
+    }
+
 
     /**
      * @inheritdoc
      */
     public function init()
     {
-        if (is_null($this->path)) {
-            throw new InvalidConfigException('The "path" attribute must be set.');
+        if (is_null($this->systemPath)) {
+            throw new InvalidConfigException('The "pathSystem" attribute must be set.');
         } else {
 
             //Получаем параметры
-            if (is_null($this->object)) {
-                $this->object = Yii::$app->request->post("object");
+            if (is_null($this->objectTable)) {
+                $this->objectTable = Yii::$app->request->post("object_table");
             }
             if (is_null($this->objectId)) {
                 $this->objectId = Yii::$app->request->post("object_id");
@@ -74,20 +113,18 @@ class Uploadifive extends Action
                 $this->uploadType = Yii::$app->request->post("upload_type");
             }
 
-            $this->pathObject = rtrim("{$this->path}/{$this->object}/{$this->objectId}", "/");
-
-            if (!file_exists($this->pathObject)) {
-                if (!FileHelper::createDirectory($this->pathObject)) {
+            if ($this->ifSavedBase) {
+                if (empty($this->objectTable) || empty($this->objectId)) {
                     throw new InvalidConfigException(
-                        "Directory specified in 'path' attribute doesn't exist or cannot be created."
+                        "не указан объекет и его ID для записи в базу данных"
                     );
                 }
             }
 
-            if ($this->ifSavedBase) {
-                if (empty($this->object) || empty($this->objectId)) {
+            if (!file_exists($this->getPathSystem())) {
+                if (!FileHelper::createDirectory($this->getPathSystem())) {
                     throw new InvalidConfigException(
-                        "не указан объекет и его ID для записи в базу данных"
+                        "Directory {$this->getPathSystem()} attribute doesn't exist or cannot be created."
                     );
                 }
             }
@@ -99,22 +136,24 @@ class Uploadifive extends Action
      */
     public function run()
     {
-        $errors = [];
-
         if (!Yii::$app->request->isPost) {
-            $errors[] = 'Only POST is allowed';
-            return $errors;
+            return 'Only POST is allowed';
         }
 
         Yii::$app->response->format = Response::FORMAT_JSON;
         $file = UploadedFile::getInstanceByName('file_upload');
 
+        if (array_search($file->extension, $this->fileExtension) === false) {
+            return "файл с расширением {$file->extension} загружать нельзя";
+        }
+        //$file->extension
+
         $this->fileTitle = $file->baseName;
         $this->newFileName = (Inflector::slug($file->baseName, '_')).
             "_".(uniqid())."."."{$file->extension}";
 
-        if (!$file->saveAs($this->getFilePath())) {
-            $errors[] = "Error save file";
+        if (!$file->saveAs(implode("/", [$this->getPathSystem(), $this->newFileName]))) {
+            return "Error save file";
         }
 
         if (!is_null($this->watermark)) {
@@ -123,19 +162,14 @@ class Uploadifive extends Action
 
         if ($this->ifSavedBase) {
             if (!$this->saveBase()) {
-                $errors[] = "Error save file";
-            } else {
-                $errors[] = "Good save file";
+                return "Error save field in base";
             }
         }
 
-        return $errors;
+        return 1;
     }
 
-    public function getFilePath()
-    {
-        return "{$this->pathObject}/{$this->newFileName}";
-    }
+
 
 
     private function saveBase()
@@ -145,11 +179,23 @@ class Uploadifive extends Action
         $newModel->status           = Image::STATUS_DRAFT;
         $newModel->type             = $this->uploadType;
         $newModel->sitemap          = 1;
-        $newModel->object_table     = $this->object;
+        $newModel->object_class     = $this->objectClass;
+        $newModel->object_table     = $this->objectTable;
         $newModel->object_id        = $this->objectId;
         $newModel->file_name        = $this->newFileName;
-        $newModel->file_url         = $this->pathObject;
+        $newModel->file_folder      = ltrim($this->getPathPublish(), "/");
+        $newModel->file_url         = implode("/", [
+            $this->getPathPublish(),
+            $this->newFileName
+        ]);
         return $newModel->save();
+    }
+
+    public function getFilePath() {
+        return implode("/", [
+            $this->getPathSystem(),
+            $this->newFileName
+        ]);
     }
 
     public function setWaterMark($right = true)
@@ -178,7 +224,7 @@ class Uploadifive extends Action
         ) {
             $waterMarkPathInfo = pathinfo($waterMark);
 
-            $waterMarkPath = "{$this->cachePath}{${DIRECTORY_SEPARATOR}}{$waterMarkPathInfo['filename']}
+            $waterMarkPath = "{$this->cachePath}/{$waterMarkPathInfo['filename']}
                 {$wmMaxWidth}x{$wmMaxHeight}.{$waterMarkPathInfo['extension']}";
 
             //throw new Exception($waterMarkPath);

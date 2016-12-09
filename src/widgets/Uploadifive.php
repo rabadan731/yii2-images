@@ -71,12 +71,12 @@ class Uploadifive extends Widget {
 			'queueID': 'queue',
 			'uploadScript': '{$this->uploadScriptUrl}',
 			'onUploadComplete': function(file, data) {
-				if (data=='0') {
-					file.queueItem.find('.fileinfo').html(' - Ошибка в загрузке файла :( ');
-					file.queueItem.find('.fileinfo').parent().removeClass(\"complete\").addClass(\"error\");
+				if (data=='1') {
+				    file.queueItem.find('.fileinfo').html(' - Файл успешно загружен! :) ');
 				} else {
-				    //console.log(data);
-					file.queueItem.find('.fileinfo').html(' - Файл успешно загружен! :) ');
+				    file.queueItem.find('.fileinfo').html(' - Ошибка в загрузке файла :( ');
+					file.queueItem.find('.fileinfo').parent().parent().removeClass(\"complete\").addClass(\"error\");
+					console.log(data);
 				}
 			},
 			'onQueueComplete' : function(uploads) {
@@ -93,6 +93,6 @@ class Uploadifive extends Widget {
      */
     public function run()
     {
-        return $this->render("index",[]);
+        return '<div id="queue"></div><input id="file_upload" name="file_upload" type="file" multiple="true">';
     }
 } 

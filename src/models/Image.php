@@ -2,6 +2,7 @@
 
 namespace rabadan731\images\models;
 
+use rabadan731\images\models\query\ImageQuery;
 use Yii;
 use yii\base\InvalidConfigException;
 use yii\behaviors\BlameableBehavior;
@@ -11,7 +12,7 @@ use yii\helpers\Inflector;
 /**
  * This is the model class for table "r731_images".
  *
- * @property integer $id
+ * @property integer $image_id
  * @property string $title
  * @property integer $status
  * @property integer $position
@@ -115,7 +116,7 @@ class Image extends \yii\db\ActiveRecord
 
     public function getPath()
     {
-        return Yii::getAlias('@frontend/web') . $this->getUrl();
+        return Yii::getAlias('@root/storage/') . ltrim($this->file_url, "/");
     }
 
 
@@ -144,91 +145,91 @@ class Image extends \yii\db\ActiveRecord
         return parent::beforeDelete();
     }
 
-    public static function deleteItems($dir, $id)
-    {
-        $items = self::find()->where(['object_table' => $dir, 'object_id' => $id])->all();
-        foreach ($items as $item) {
-            $item->delete();
-        }
-    }
+//    public static function deleteItems($dir, $id)
+//    {
+//        $items = self::find()->where(['object_table' => $dir, 'object_id' => $id])->all();
+//        foreach ($items as $item) {
+//            $item->delete();
+//        }
+//    }
 
     /**********************************************  ******************************************************/
 
     public function getLogo($w = 250)
     {
         return Yii::$app->image->getImage([
-            'path' => $this->url,
+            'path' => $this->file_url,
             'actions' => ['best_fit' => ['w' => $w]]
         ]);
     }
 
 
-    public static function getList(
-        $tableAttribute = null,
-        $idAttribute = null,
-        $type = self::IMG_LIST,
-        $tumbWidth = 250,
-        $imgWidth = 1920,
-        $imgHeight = 1080)
-    {
-
-        if ($tableAttribute === null) {
-            throw new InvalidConfigException('The "tableAttribute" property must be set.');
-        }
-        if ($idAttribute === null) {
-            throw new InvalidConfigException('The "idAttribute" property must be set.');
-        }
-
-        $images = self::find()->where([
-            'object_table' => $tableAttribute,
-            'object_id' => $idAttribute,
-            'type' => $type
-        ])->all();
-
-        $result = [];
-
-
-        if (count($images)) {
-
-            foreach ($images as $image) {
-                $parametrsThumb = [
-                    'path' => ($image->file_url) . ($image->file_name),
-                    'actions' => [
-                        'thumbnail' => ['w' => $tumbWidth, 'h' => $tumbWidth]
-                    ]
-                ];
-
-                if ($image->crop !== null) {
-                    $crop = explode(",", $image->crop);
-                    $parametrsThumb['actions'] = array_merge(
-                        ['crop' => ['x1' => $crop[0], 'y1' => $crop[1], 'x2' => $crop[2], 'y2' => $crop[3]]],
-                        $parametrsThumb['actions']
-                    );
-                }
-                $parametrsImg = [
-                    'path' => ($image->file_url) . ($image->file_name),
-                    'actions' => [
-                        'best_fit' => ['w' => $imgWidth, 'h' => $imgHeight]
-                    ]
-                ];
-                $result[$image->id] = [
-                    'thumb' => Yii::getAlias("@frontendUrl") . Yii::$app->image->getImage($parametrsThumb),
-                    'img' => Yii::getAlias("@frontendUrl") . Yii::$app->image->getImage($parametrsImg),
-                    'original' => Yii::getAlias("@frontendUrl") . ($image->file_url) . ($image->file_name),
-                    'title' => $image->title
-                ];
-            }
-        } else {
-            $result[0] = [
-                'thumb' => Yii::getAlias("@frontendUrl") . Yii::$app->image->noimagePath,
-                'img' => Yii::getAlias("@frontendUrl") . Yii::$app->image->noimagePath,
-                'original' => Yii::getAlias("@frontendUrl") . Yii::$app->image->noimagePath,
-                'title' => 'No image'
-            ];
-        }
-
-        return $result;
-    }
+//    public static function getList(
+//        $tableAttribute = null,
+//        $idAttribute = null,
+//        $type = self::IMG_LIST,
+//        $tumbWidth = 250,
+//        $imgWidth = 1920,
+//        $imgHeight = 1080)
+//    {
+//
+//        if ($tableAttribute === null) {
+//            throw new InvalidConfigException('The "tableAttribute" property must be set.');
+//        }
+//        if ($idAttribute === null) {
+//            throw new InvalidConfigException('The "idAttribute" property must be set.');
+//        }
+//
+//        $images = self::find()->where([
+//            'object_table' => $tableAttribute,
+//            'object_id' => $idAttribute,
+//            'type' => $type
+//        ])->all();
+//
+//        $result = [];
+//
+//
+//        if (count($images)) {
+//
+//            foreach ($images as $image) {
+//                $parametrsThumb = [
+//                    'path' => ($image->file_url) . ($image->file_name),
+//                    'actions' => [
+//                        'thumbnail' => ['w' => $tumbWidth, 'h' => $tumbWidth]
+//                    ]
+//                ];
+//
+//                if ($image->crop !== null) {
+//                    $crop = explode(",", $image->crop);
+//                    $parametrsThumb['actions'] = array_merge(
+//                        ['crop' => ['x1' => $crop[0], 'y1' => $crop[1], 'x2' => $crop[2], 'y2' => $crop[3]]],
+//                        $parametrsThumb['actions']
+//                    );
+//                }
+//                $parametrsImg = [
+//                    'path' => ($image->file_url) . ($image->file_name),
+//                    'actions' => [
+//                        'best_fit' => ['w' => $imgWidth, 'h' => $imgHeight]
+//                    ]
+//                ];
+//                $result[$image->id] = [
+//                    'thumb' => Yii::getAlias("@frontendUrl") . Yii::$app->image->getImage($parametrsThumb),
+//                    'img' => Yii::getAlias("@frontendUrl") . Yii::$app->image->getImage($parametrsImg),
+//                    'original' => Yii::getAlias("@frontendUrl") . ($image->file_url) . ($image->file_name),
+//                    'title' => $image->title
+//                ];
+//            }
+//        } else {
+//            $result[0] = [
+//                'thumb' => Yii::getAlias("@frontendUrl") . Yii::$app->image->noimagePath,
+//                'img' => Yii::getAlias("@frontendUrl") . Yii::$app->image->noimagePath,
+//                'original' => Yii::getAlias("@frontendUrl") . Yii::$app->image->noimagePath,
+//                'title' => 'No image'
+//            ];
+//        }
+//
+//        return $result;
+//    }
 
 
     public static function updateList($post)
@@ -241,31 +242,31 @@ class Image extends \yii\db\ActiveRecord
                 if (isset($data['title'])) {
                     $model->title = $data['title'];
                 }
-                if (isset($data['type'])) {
-                    $model->type = $data['type'];
-                }
+//                if (isset($data['type'])) {
+//                    $model->type = $data['type'];
+//                }
                 if (isset($data['position'])) {
                     $model->position = $data['position'];
                 }
 
 
-                if (isset($data['file']) && ($data['file'] == 1)) {
-                    $old_full_url = Yii::getAlias('@frontend/web/') . $model->file_url . DIRECTORY_SEPARATOR . $model->file_name;
-                    if (is_file($old_full_url)) {
-                        $new_file_name = Inflector::slug($data['title'], '_') . "_" . uniqid() . substr(strrchr($model->file_name, '.'), 0);
-                        $new_full_url = Yii::getAlias('@frontend/web/') . ($model->file_url) . DIRECTORY_SEPARATOR . $new_file_name;
-                        if (rename($old_full_url, $new_full_url)) {
-                            $model->file_name = $new_file_name;
-                        } else {
-                            echo 'no rename file';
-                            die;
-                        }
-                    } else {
-                        echo "<pre>" . print_r($old_full_url, true) . "</pre>";
-                        echo 'no find file';
-                        die;
-                    }
-                }
+//                if (isset($data['file']) && ($data['file'] == 1)) {
+//                    $old_full_url = Yii::getAlias('@frontend/web/') . $model->file_url . DIRECTORY_SEPARATOR . $model->file_name;
+//                    if (is_file($old_full_url)) {
+//                        $new_file_name = Inflector::slug($data['title'], '_') . "_" . uniqid() . substr(strrchr($model->file_name, '.'), 0);
+//                        $new_full_url = Yii::getAlias('@frontend/web/') . ($model->file_url) . DIRECTORY_SEPARATOR . $new_file_name;
+//                        if (rename($old_full_url, $new_full_url)) {
+//                            $model->file_name = $new_file_name;
+//                        } else {
+//                            echo 'no rename file';
+//                            die;
+//                        }
+//                    } else {
+//                        echo "<pre>" . print_r($old_full_url, true) . "</pre>";
+//                        echo 'no find file';
+//                        die;
+//                    }
+//                }
 
                 $model->save();
             } else {
@@ -273,5 +274,15 @@ class Image extends \yii\db\ActiveRecord
                 die;
             }
         }
+    }
+
+
+    /**
+     * @inheritdoc
+     * @return ImageQuery the active query used by this AR class.
+     */
+    public static function find()
+    {
+        return new ImageQuery(get_called_class());
     }
 }
