@@ -155,11 +155,19 @@ class Image extends \yii\db\ActiveRecord
 
     /**********************************************  ******************************************************/
 
-    public function getLogo($w = 250)
+    public function getLogo($w = 250, $h=250)
     {
         return Yii::$app->image->getImage([
             'path' => $this->file_url,
-            'actions' => ['best_fit' => ['w' => $w]]
+            'actions' => ['best_fit' => ['w' => $w, 'h' => $h]]
+        ]);
+    }
+
+    public function getThumb($w = 250, $h=250)
+    {
+        return Yii::$app->image->getImage([
+            'path' => $this->file_url,
+            'actions' => ['thumbnail' => ['w' => $w, 'h' => $h]]
         ]);
     }
 
