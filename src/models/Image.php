@@ -111,7 +111,7 @@ class Image extends \yii\db\ActiveRecord
 
     public function getUrl()
     {
-        return DIRECTORY_SEPARATOR . trim($this->file_url, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $this->file_name;
+        return "/".ltrim($this->file_url, "/");
     }
 
     public function getPath()
