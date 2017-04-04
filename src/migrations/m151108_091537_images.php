@@ -32,6 +32,7 @@ class m151108_091537_images extends Migration
 
             'created_at'                => $this->integer(),    //дата создания
             'updated_at'                => $this->integer(),    //дата редактирования
+            'eventDate'                 => $this->integer(),    //дата редактирования
 
             'created_by'                => $this->integer(),    //кто создал
             'updated_by'                => $this->integer(),    //кто редактирования

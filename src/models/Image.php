@@ -2,12 +2,10 @@
 
 namespace rabadan731\images\models;
 
-use rabadan731\images\models\query\ImageQuery;
 use Yii;
-use yii\base\InvalidConfigException;
 use yii\behaviors\BlameableBehavior;
 use yii\behaviors\TimestampBehavior;
-use yii\helpers\Inflector;
+use rabadan731\images\models\query\ImageQuery;
 
 /**
  * This is the model class for table "r731_images".
@@ -27,6 +25,7 @@ use yii\helpers\Inflector;
  * @property string $crop
  * @property integer $created_at
  * @property integer $updated_at
+ * @property integer $eventDate
  * @property integer $created_by
  * @property integer $updated_by
  */
@@ -75,6 +74,7 @@ class Image extends \yii\db\ActiveRecord
                 'object_id',
                 'created_at',
                 'updated_at',
+                'eventDate',
                 'created_by',
                 'updated_by'], 'integer'
             ],
@@ -104,6 +104,7 @@ class Image extends \yii\db\ActiveRecord
             'crop' => Yii::t('common', 'Crop'),
             'created_at' => Yii::t('common', 'Created At'),
             'updated_at' => Yii::t('common', 'Updated At'),
+            'eventDate' => Yii::t('common', 'Event Date'),
             'created_by' => Yii::t('common', 'Created By'),
             'updated_by' => Yii::t('common', 'Updated By'),
         ];
