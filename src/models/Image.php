@@ -28,6 +28,8 @@ use rabadan731\images\models\query\ImageQuery;
  * @property integer $eventDate
  * @property integer $created_by
  * @property integer $updated_by
+ *
+ * @property string $niceEventDate
  */
 class Image extends \yii\db\ActiveRecord
 {
@@ -293,5 +295,10 @@ class Image extends \yii\db\ActiveRecord
     public static function find()
     {
         return new ImageQuery(get_called_class());
+    }
+
+    public function getNiceEventDate()
+    {
+        return Yii::$app->formatter->asDatetime($this->eventDate);
     }
 }
